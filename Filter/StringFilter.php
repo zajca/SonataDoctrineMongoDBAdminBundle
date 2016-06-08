@@ -1,10 +1,9 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
- * (c) Kévin Dunglas <dunglas@gmail.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -39,12 +38,21 @@ class StringFilter extends Filter
 
         $data['type'] = isset($data['type']) && !empty($data['type']) ? $data['type'] : ChoiceType::TYPE_CONTAINS;
 
+        $obj = $queryBuilder;
+        if ($this->condition == self::CONDITION_OR) {
+            $obj = $queryBuilder->expr();
+        }
+
         if ($data['type'] == ChoiceType::TYPE_EQUAL) {
-            $queryBuilder->field($field)->equals($data['value']);
+            $obj->field($field)->equals($data['value']);
         } elseif ($data['type'] == ChoiceType::TYPE_CONTAINS) {
-            $queryBuilder->field($field)->equals(new \MongoRegex(sprintf('/%s/i', $data['value'])));
+            $obj->field($field)->equals(new \MongoRegex(sprintf('/%s/i', $data['value'])));
         } elseif ($data['type'] == ChoiceType::TYPE_NOT_CONTAINS) {
-            $queryBuilder->field($field)->not(new \MongoRegex(sprintf('/%s/i', $data['value'])));
+            $obj->field($field)->not(new \MongoRegex(sprintf('/%s/i', $data['value'])));
+        }
+
+        if ($this->condition == self::CONDITION_OR) {
+            $queryBuilder->addOr($obj);
         }
 
         $this->active = true;
@@ -61,9 +69,9 @@ class StringFilter extends Filter
     public function getRenderSettings()
     {
         return array('sonata_type_filter_choice', array(
-                'field_type'    => $this->getFieldType(),
+                'field_type' => $this->getFieldType(),
                 'field_options' => $this->getFieldOptions(),
-                'label'         => $this->getLabel(),
+                'label' => $this->getLabel(),
         ));
     }
 }
